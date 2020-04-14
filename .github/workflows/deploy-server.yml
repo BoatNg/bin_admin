@@ -1,0 +1,35 @@
+# main.yml
+name: trinity ci
+on:
+  push:
+    branches:
+      - master
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # 切换分支
+      - name: Checkout
+        uses: actions/checkout@master
+      # 使用 node:12
+      - name: install node
+        uses: actions/setup-node@v1
+        with:
+          node-version: 12
+      # npm install
+      - name: build
+        run: |
+          yarn install
+          yarn build
+        env:
+          CI: true
+      # deploy
+      - name: deploy
+        id: funny-deploy
+        uses: BoatNg/funny-deploy@v1.0.1
+        env:
+          REMOTE_HOST: "${{ secrets.REMOTE_HOST }}"
+          REMOTE_USER: "${{ secrets.REMOTE_USER }}"
+          REMOTE_PASSWORD: "${{ secrets.REMOTE_PASSWORD }}"
+          REMOTE_PATH: "/home/wwwroot/bin_admin/dist"
+          SOURCE: "dist/"
