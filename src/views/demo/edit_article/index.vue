@@ -198,7 +198,6 @@ export default {
       //   return;
       // }
       console.log(this.html)
-      return
       if (!this.html) {
         this.warn("请输入内容");
         return;
