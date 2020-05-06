@@ -1,29 +1,30 @@
 <template>
   <d2-container>
     <template slot="header">
-      <span style="display:inline-block; padding-right:20px;">{{query.name || '编辑文章'}}</span>
-      <span>
-        <el-switch
-          style="display: block"
-          v-model="is_content"
-          active-color="#13ce66"
-          inactive-color="#ff4949"
-          active-text="中文"
-          inactive-text="英文"
-          @change="handleSwitchChange"
-        ></el-switch>
-      </span>
-      <!-- <el-cascader
-        v-model="selectValue"
-        :options="options"
-        ref="tree"
-        placeholder="请选择标题"
-        :props="{value: 'id', label: 'name'}"
-      ></el-cascader>
-
-      <b
-        style="display:inline-block; padding-left:10px; color: #F56C6C; font-size: 8px"
-      >标题必选(不能选择一级标题)*</b>-->
+      <el-row>
+        <span style="display:inline-block; padding-right:20px;">{{query.name || '编辑文章'}}</span>
+      </el-row>
+      <el-row style="padding-top: 10px;">
+        <el-col :span="4">
+          <span>
+            <el-switch
+              style="display: block"
+              v-model="is_content"
+              active-color="#13ce66"
+              inactive-color="#ff4949"
+              active-text="中文"
+              inactive-text="英文"
+              @change="handleSwitchChange"
+            ></el-switch>
+          </span>
+        </el-col>
+        <el-col :span="8">
+          <el-button size="mini" @click="callImgUpload('cover')">编辑封面</el-button>
+          <span
+            style="color: #a3a3a3; font-size:12px; display: inline-block; padding-left: 15px;"
+          >{{data.cover_path?`封面地址：(${data.cover_path})`:'(暂无封面)' }}</span>
+        </el-col>
+      </el-row>
     </template>
     <d2-quill style="min-height: 200px; margin-bottom: 20px;" v-model="html" />
     <template slot="footer">
@@ -33,7 +34,7 @@
         v-loading.fullscreen.lock="fullscreenLoading"
       >提交</el-button>
 
-      <el-button type="primary" @click="drawer=true">上传图片</el-button>
+      <el-button type="primary" @click="callImgUpload('article')">上传图片</el-button>
       <el-button
         type="danger"
         @click="handleDelete"
@@ -42,6 +43,7 @@
       >删除</el-button>
     </template>
 
+    <!-- 文章图片 -->
     <el-drawer :visible.sync="drawer" :with-header="false">
       <div style="padding: 20px;">
         <el-card shadow="never" class="d2-card d2-mt">
@@ -92,7 +94,8 @@ export default {
       fileList: [],
       limit: 5,
       is_content: true,
-      data: {}
+      data: {},
+      uploadImgType: "" // article cover
     };
   },
   computed: {
@@ -107,12 +110,22 @@ export default {
   props: ["query"],
   methods: {
     ...mapActions("d2admin/page", ["close"]),
+    callImgUpload(type) {
+      this.uploadImgType = type;
+      this.drawer = true;
+
+      if (type === "article") {
+        this.limit = 5;
+      } else {
+        this.limit = 1;
+      }
+    },
     handleSwitchChange() {
       if (this.query.article_id) {
         if (this.is_content === false) {
-          this.html = this.data.english_content || '';
+          this.html = this.data.english_content || "";
         } else {
-          this.html = this.data.content || ''
+          this.html = this.data.content || "";
         }
       }
     },
@@ -149,14 +162,21 @@ export default {
         });
     },
     addImg() {
-      let img = "";
-      this.fileList.forEach(item => {
-        let path = _.get(item, "response.data.path", false);
-        if (path) {
-          img += `<img src="${STATIC_HOST}${path}">`;
-        }
-      });
-      this.html += img;
+      if (this.uploadImgType === "article") {
+        let img = "";
+        this.fileList.forEach(item => {
+          let path = _.get(item, "response.data.path", false);
+          if (path) {
+            img += `<img src="${STATIC_HOST}${path}">`;
+          }
+        });
+        this.html += img;
+      } else {
+        let img = _.get(this, "fileList[0].response.data.path", "");
+        console.log(img)
+        this.data.cover_path = img;
+      }
+
       setTimeout(() => {
         this.fileList = [];
         this.drawer = false;
@@ -197,7 +217,7 @@ export default {
       //   this.warn("不能选择一级标题");
       //   return;
       // }
-      console.log(this.html)
+      console.log(this.html);
       if (!this.html) {
         this.warn("请输入内容");
         return;
@@ -210,6 +230,9 @@ export default {
         body.content = this.html;
       } else {
         body.english_content = this.html;
+      }
+      if (this.data.cover_path) {
+        body.cover_path = this.data.cover_path;
       }
 
       if (query.article_id) {
@@ -239,9 +262,9 @@ export default {
                 article_id: data.article_id
               }
             });
-            return this.refleshData(data.article_id)
+            return this.refleshData(data.article_id);
           })
-          .then(_=> {
+          .then(_ => {
             this.success("新增成功");
           })
           .catch(_ => {
@@ -256,13 +279,12 @@ export default {
       //   this.options = data;
       //   console.log(data);
       // });
-      console.log('reflesh data')
+      console.log("reflesh data");
       if (this.query.article_id || article_id) {
-        console.log('ok')
+        console.log("ok");
         this.fullscreenLoading = true;
         return getArticle(this.query.article_id || article_id).then(data => {
           this.fullscreenLoading = false;
-          console.log(data);
           this.html = data.content;
           this.data = data;
         });
