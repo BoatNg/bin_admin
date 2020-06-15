@@ -82,6 +82,12 @@
               >添加子标题</el-button>
 
               <el-button type="text" size="mini" @click="() => handleEdit(data, 'edit')">编辑标题</el-button>
+              <el-button
+                type="text"
+                size="mini"
+                @click="() => handleEdit(data, 'delete')"
+                style="color: #F56C6C"
+              >删除标题</el-button>
             </span>
           </div>
         </el-tree>
@@ -140,7 +146,7 @@
 </template>
 
 <script>
-import { getTitle, putTitle, postTitle } from "@/api/ajax";
+import { getTitle, putTitle, postTitle, deleteTitle } from "@/api/ajax";
 import _ from "lodash";
 const STATIC_HOST = process.env.VUE_APP_STATIC_HOST;
 
@@ -375,6 +381,16 @@ export default {
             });
           }
         }
+      } else if (type === "delete") {
+        this.$confirm("确定删除？该操作不可撤销。")
+          .then(__ => {
+            return deleteTitle(row.id);
+          })
+          .then(res => {
+            console.log("delete res", res);
+            return this.refleshData();
+          });
+        return;
       } else {
         node.id = "";
         node.name = "";

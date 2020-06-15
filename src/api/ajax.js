@@ -84,3 +84,10 @@ export function deleteArticle(title_id, article_id) {
     method: 'delete',
   })
 }
+
+export function deleteTitle(title_id) {
+  return request({
+    url: `/v1/title/${title_id}`,
+    method: 'delete'
+  })
+}
