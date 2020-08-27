@@ -35,6 +35,7 @@
               :style="node.data.is_deleted?{
                 textDecoration: 'line-through',
               }:{}"
+              class="item_wrap"
             >
               <span style="color: #F56C6C;" v-if="node.data.is_deleted">禁用</span>
               <span style="font-size: 8px">({{node.data.level}}级)</span>
@@ -436,5 +437,11 @@ export default {
   justify-content: space-between;
   font-size: 14px;
   padding-right: 8px;
+}
+.item_wrap {
+  width: 500px;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
 }
 </style>
